@@ -11,7 +11,7 @@ echo "Extracting env variables and deploying to Vercel..."
 cat << 'EOF' > deploy_backend.exp
 #!/usr/bin/expect -f
 set timeout 120
-spawn npx vercel --prod
+spawn npx --yes vercel --prod
 expect {
     "Set up and deploy" { send "y\r"; exp_continue }
     "Which scope do you want to deploy to" { send "\r"; exp_continue }
@@ -34,7 +34,7 @@ cat .env | grep -v '^#' | while read line; do
     cat << EOF2 > add_env_$key.exp
 #!/usr/bin/expect -f
 set timeout 10
-spawn npx vercel env add $key production
+spawn npx --yes vercel env add $key production
 expect {
     "What's the value of $key" { send "$value\r"; exp_continue }
     eof { }

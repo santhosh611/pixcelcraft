@@ -1,0 +1,7 @@
+#!/usr/bin/expect -f
+set timeout 10
+spawn npx vercel env add MONGO_URI production
+expect {
+    "What's the value of MONGO_URI" { send "mongodb+srv://techvaseegrah:J21UwbM8M0hXEt7a@cluster0.n84fyq1.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0\r"; exp_continue }
+    eof { }
+}
