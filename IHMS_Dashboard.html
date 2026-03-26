@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IHMS — Internal Hospital Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface2: #f7f8fa;
+    --border: #e4e7ed;
+    --border2: #d0d5dd;
+    --text: #111827;
+    --text2: #4b5563;
+    --text3: #9ca3af;
+    --teal: #0d9488;
+    --teal-light: #f0fdfa;
+    --teal-dark: #0f766e;
+    --blue: #2563eb;
+    --blue-light: #eff6ff;
+    --red: #dc2626;
+    --red-light: #fef2f2;
+    --amber: #d97706;
+    --amber-light: #fffbeb;
+    --green: #16a34a;
+    --green-light: #f0fdf4;
+    --purple: #7c3aed;
+    --purple-light: #f5f3ff;
+    --sidebar-w: 220px;
+    --header-h: 60px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* LAYOUT */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: var(--sidebar-w); background: #0c1426; position: fixed; top: 0; left: 0; height: 100vh; overflow-y: auto; z-index: 100; display: flex; flex-direction: column; }
+  .main { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+  .header { height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; gap: 16px; position: sticky; top: 0; z-index: 50; }
+  .content { flex: 1; padding: 24px; }
+
+  /* SIDEBAR */
+  .sidebar-logo { padding: 20px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-logo-title { font-family: 'DM Serif Display', serif; font-size: 20px; color: #fff; letter-spacing: 0.02em; }
+  .sidebar-logo-sub { font-size: 10px; color: rgba(255,255,255,0.35); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 2px; }
+  .sidebar-role-picker { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+  .sidebar-role-picker label { font-size: 10px; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 6px; }
+  .sidebar-role-picker select { width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+  .sidebar-role-picker select option { background: #1a2435; color: #fff; }
+  .sidebar-nav { padding: 12px 8px; flex: 1; }
+  .nav-section-label { font-size: 10px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; padding: 8px 8px 4px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 7px; cursor: pointer; transition: all 0.15s; color: rgba(255,255,255,0.6); font-size: 13px; margin-bottom: 2px; }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+  .nav-item.active { background: rgba(13,148,136,0.25); color: #2dd4bf; }
+  .nav-item .icon { width: 16px; text-align: center; font-size: 15px; }
+  .nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 10px; padding: 1px 5px; border-radius: 10px; min-width: 18px; text-align: center; }
+
+  /* HEADER */
+  .header-search { flex: 1; max-width: 380px; position: relative; }
+  .header-search input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 7px 12px 7px 32px; font-size: 13px; color: var(--text); font-family: 'DM Sans', sans-serif; outline: none; }
+  .header-search input:focus { border-color: var(--teal); }
+  .header-search::before { content: '🔍'; position: absolute; left: 10px; top: 50%; transform: translateY(-50%); font-size: 12px; }
+  .header-alerts { display: flex; align-items: center; gap: 6px; background: var(--red-light); border: 1px solid #fca5a5; border-radius: 8px; padding: 5px 10px; cursor: pointer; font-size: 12px; color: var(--red); font-weight: 500; }
+  .header-time { font-size: 13px; color: var(--text2); }
+  .header-user { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+  .header-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+
+  /* CARDS */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .card-title { font-size: 14px; font-weight: 600; color: var(--text); }
+  .card-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  /* STAT CARDS */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 16px 20px; }
+  .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .stat-value { font-size: 28px; font-weight: 600; color: var(--text); margin: 4px 0 8px; font-family: 'DM Serif Display', serif; }
+  .stat-change { font-size: 12px; display: flex; align-items: center; gap: 4px; }
+  .stat-change.up { color: var(--green); }
+  .stat-change.down { color: var(--red); }
+  .stat-change.neutral { color: var(--text3); }
+  .stat-icon { float: right; font-size: 22px; opacity: 0.15; margin-top: -4px; }
+
+  /* GRID LAYOUTS */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* TABLES */
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; padding: 0 12px 10px; font-weight: 500; }
+  td { padding: 10px 12px; border-top: 1px solid var(--border); font-size: 13px; }
+  tr:hover td { background: var(--surface2); }
+
+  /* BADGES */
+  .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 100px; font-size: 11px; font-weight: 500; }
+  .badge-green { background: var(--green-light); color: #15803d; }
+  .badge-red { background: var(--red-light); color: #b91c1c; }
+  .badge-amber { background: var(--amber-light); color: #92400e; }
+  .badge-blue { background: var(--blue-light); color: #1d4ed8; }
+  .badge-teal { background: var(--teal-light); color: var(--teal-dark); }
+  .badge-purple { background: var(--purple-light); color: #6d28d9; }
+  .badge-gray { background: #f3f4f6; color: #374151; }
+
+  /* TOKEN QUEUE */
+  .token-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .token { text-align: center; padding: 10px 6px; border-radius: 8px; border: 1px solid var(--border); font-weight: 600; font-size: 15px; }
+  .token.waiting { background: var(--surface2); color: var(--text2); }
+  .token.active { background: var(--teal); color: #fff; border-color: var(--teal); animation: pulse 2s infinite; }
+  .token.done { background: var(--green-light); color: #15803d; border-color: #bbf7d0; }
+  .token.skipped { background: var(--amber-light); color: #92400e; border-color: #fde68a; }
+  .token sub { display: block; font-size: 9px; font-weight: 400; opacity: 0.7; margin-top: 2px; }
+  @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(13,148,136,0.3)} 50%{box-shadow:0 0 0 8px rgba(13,148,136,0)} }
+
+  /* VITALS */
+  .vitals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .vital-card { background: var(--surface2); border-radius: 8px; padding: 12px; border: 1px solid var(--border); }
+  .vital-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text3); }
+  .vital-value { font-size: 22px; font-weight: 600; margin: 4px 0 2px; font-family: 'DM Serif Display', serif; }
+  .vital-unit { font-size: 11px; color: var(--text3); }
+  .vital-normal { color: var(--green); }
+  .vital-warning { color: var(--amber); }
+  .vital-critical { color: var(--red); }
+  .vital-alert { font-size: 10px; margin-top: 4px; padding: 2px 6px; border-radius: 4px; background: var(--red-light); color: var(--red); display: inline-block; }
+
+  /* ALERT PANEL */
+  .alert-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 8px; margin-bottom: 8px; }
+  .alert-critical { background: var(--red-light); border: 1px solid #fca5a5; }
+  .alert-warning { background: var(--amber-light); border: 1px solid #fde68a; }
+  .alert-info { background: var(--blue-light); border: 1px solid #bfdbfe; }
+  .alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .alert-critical .alert-dot { background: var(--red); }
+  .alert-warning .alert-dot { background: var(--amber); }
+  .alert-info .alert-dot { background: var(--blue); }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 7px; font-size: 13px; font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.15s; border: none; font-weight: 500; }
+  .btn-primary { background: var(--teal); color: #fff; }
+  .btn-primary:hover { background: var(--teal-dark); }
+  .btn-outline { background: transparent; border: 1px solid var(--border2); color: var(--text); }
+  .btn-outline:hover { background: var(--surface2); }
+  .btn-red { background: var(--red); color: #fff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+  /* DASHBOARD PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* PATIENT ROW */
+  .patient-photo { width: 30px; height: 30px; border-radius: 50%; background: var(--blue-light); color: var(--blue); display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+
+  /* BED MAP */
+  .bed-map { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+  .bed { padding: 10px 8px; border-radius: 8px; border: 1px solid var(--border); text-align: center; font-size: 12px; cursor: pointer; transition: all 0.15s; }
+  .bed:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .bed.available { background: var(--green-light); border-color: #bbf7d0; color: #15803d; }
+  .bed.occupied { background: #fef2f2; border-color: #fca5a5; color: #991b1b; }
+  .bed.maintenance { background: var(--amber-light); border-color: #fde68a; color: #92400e; }
+  .bed-num { font-weight: 700; font-size: 14px; }
+  .bed-type { font-size: 10px; opacity: 0.7; }
+
+  /* MINI CHART */
+  .mini-chart { position: relative; height: 60px; }
+  .mini-bar { display: inline-block; background: var(--teal); border-radius: 3px 3px 0 0; margin: 0 1px; vertical-align: bottom; opacity: 0.7; transition: opacity 0.15s; }
+  .mini-bar:hover { opacity: 1; }
+
+  /* PRESCRIPTION LIST */
+  .rx-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .rx-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--teal-light); color: var(--teal); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+
+  /* TIMELINE */
+  .timeline-item { display: flex; gap: 12px; margin-bottom: 16px; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--teal); flex-shrink: 0; margin-top: 3px; position: relative; }
+  .timeline-dot::after { content:''; position: absolute; top: 12px; left: 4px; width: 1px; height: calc(100% + 14px); background: var(--border); }
+  .timeline-item:last-child .timeline-dot::after { display: none; }
+
+  /* FORM */
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 5px; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--border2); border-radius: 7px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--teal); }
+  .form-textarea { resize: vertical; min-height: 80px; }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+  /* INVENTORY BAR */
+  .inv-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+  .inv-bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* PAGE TITLE */
+  .page-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); }
+  .page-subtitle { font-size: 13px; color: var(--text3); margin-top: 2px; }
+  .page-header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+
+  /* BREADCRUMB */
+  .breadcrumb { font-size: 12px; color: var(--text3); }
+  .breadcrumb span { color: var(--text); }
+
+  /* SECTION */
+  .section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 10px; font-weight: 600; }
+
+  /* NOTIFICATION DOT */
+  .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); display: inline-block; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-title">IHMS</div>
+      <div class="sidebar-logo-sub">Vetri Hospital Network</div>
+    </div>
+
+    <div class="sidebar-role-picker">
+      <label>Viewing as</label>
+      <select onchange="switchRole(this.value)">
+        <option value="admin">👤 Administrator</option>
+        <option value="reception">🏥 Receptionist</option>
+        <option value="doctor">🩺 Doctor</option>
+        <option value="nurse">💊 Nurse</option>
+        <option value="lab">🔬 Lab Technician</option>
+        <option value="pharmacy">💊 Pharmacist</option>
+      </select>
+    </div>
+
+    <nav class="sidebar-nav" id="sidebar-nav">
+      <!-- injected per role -->
+    </nav>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- HEADER -->
+    <header class="header">
+      <div class="header-search">
+        <input type="text" placeholder="Search patient by name, ID, phone…" id="global-search">
+      </div>
+      <div class="header-alerts" onclick="showPage('alerts')">
+        ⚠️ 3 Critical Alerts
+      </div>
+      <div class="header-time" id="clock"></div>
+      <div class="header-user">
+        <div class="header-avatar" id="avatar-initials">AD</div>
+        <div>
+          <div style="font-size:13px;font-weight:500" id="username-display">Admin</div>
+          <div style="font-size:11px;color:var(--text3)" id="role-display">Administrator</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <div class="content" id="content">
+
+      <!-- ======================== ADMIN DASHBOARD ======================== -->
+      <div class="page active" id="page-admin">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Good morning, Admin</div>
+            <div class="page-subtitle">Thursday, 26 March 2026 — Vetri Hospital, Kallakurichi</div>
+          </div>
+          <button class="btn btn-primary" onclick="showPage('register')">+ Register Patient</button>
+        </div>
+
+        <!-- STAT CARDS -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon">🏥</div>
+            <div class="stat-label">OPD Today</div>
+            <div class="stat-value">84</div>
+            <div class="stat-change up">↑ 12 from yesterday</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🛏️</div>
+            <div class="stat-label">Beds Occupied</div>
+            <div class="stat-value">38<span style="font-size:16px;color:var(--text3)">/60</span></div>
+            <div class="stat-change neutral">63% occupancy</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🔬</div>
+            <div class="stat-label">Lab Pending</div>
+            <div class="stat-value">12</div>
+            <div class="stat-change down">↑ 5 since 9am</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">₹</div>
+            <div class="stat-label">Revenue Today</div>
+            <div class="stat-value">₹1.84L</div>
+            <div class="stat-change up">↑ 8% vs avg</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- DEPT-WISE OPD -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Department-wise OPD</div>
+                <div class="card-subtitle">Today's patient distribution</div>
+              </div>
+            </div>
+            <table>
+              <thead><tr><th>Department</th><th>Patients</th><th>Avg Wait</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>General Medicine</td><td>24</td><td>18 min</td><td><span class="badge badge-green">Normal</span></td></tr>
+                <tr><td>Cardiology</td><td>18</td><td>22 min</td><td><span class="badge badge-green">Normal</span></td></tr>
+                <tr><td>Orthopaedics</td><td>15</td><td>35 min</td><td><span class="badge badge-amber">Busy</span></td></tr>
+                <tr><td>Paediatrics</td><td>14</td><td>12 min</td><td><span class="badge badge-green">Normal</span></td></tr>
+                <tr><td>Gynaecology</td><td>8</td><td>20 min</td><td><span class="badge badge-green">Normal</span></td></tr>
+                <tr><td>Dermatology</td><td>5</td><td>8 min</td><td><span class="badge badge-green">Normal</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- ACTIVE ALERTS -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Active Alerts</div>
+              <span class="badge badge-red">3 Critical</span>
+            </div>
+            <div class="alert-item alert-critical">
+              <div class="alert-dot"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--red)">Critical BP — Room C-204</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px">Rajesh Kumar (VH-2024-00142) — BP 182/110 mmHg recorded 10 min ago</div>
+              </div>
+            </div>
+            <div class="alert-item alert-critical">
+              <div class="alert-dot"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--red)">Low SpO₂ — ICU Bed 2</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px">Murugan S. (VH-2024-00003) — SpO₂ 88% — requires attention</div>
+              </div>
+            </div>
+            <div class="alert-item alert-warning">
+              <div class="alert-dot"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--amber)">Low Stock — Pharmacy</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px">Metformin 500mg — only 120 tablets remaining (reorder: 500)</div>
+              </div>
+            </div>
+            <div class="alert-item alert-info">
+              <div class="alert-dot" style="background:var(--blue)"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500;color:var(--blue)">Lab Results Ready</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px">4 reports uploaded and awaiting doctor review</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RECENT PATIENTS -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Registrations</div>
+            <button class="btn btn-outline btn-sm" onclick="showPage('reception')">View All</button>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Patient</th><th>ID</th><th>Department</th><th>Doctor</th><th>Type</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="patient-photo">RK</div> Rajesh Kumar</div></td>
+                <td style="color:var(--text3);font-size:12px">VH-2024-00142</td><td>Cardiology</td><td>Dr. Aravind</td>
+                <td><span class="badge badge-red">IPD</span></td><td><span class="badge badge-amber">Admitted</span></td>
+                <td><button class="btn btn-outline btn-sm" onclick="showPage('patient-detail')">View</button></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="patient-photo" style="background:var(--purple-light);color:var(--purple)">LD</div> Lakshmi Devi</div></td>
+                <td style="color:var(--text3);font-size:12px">VH-2024-00143</td><td>Gynaecology</td><td>Dr. Meenakshi</td>
+                <td><span class="badge badge-blue">OPD</span></td><td><span class="badge badge-green">Completed</span></td>
+                <td><button class="btn btn-outline btn-sm">View</button></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="patient-photo" style="background:var(--amber-light);color:var(--amber)">MS</div> Murugan S.</div></td>
+                <td style="color:var(--text3);font-size:12px">VH-2024-00003</td><td>General Medicine</td><td>Dr. Aravind</td>
+                <td><span class="badge badge-red">ICU</span></td><td><span class="badge badge-red">Critical</span></td>
+                <td><button class="btn btn-outline btn-sm" onclick="showPage('vitals')">Vitals</button></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;align-items:center;gap:8px"><div class="patient-photo" style="background:var(--green-light);color:var(--green)">PK</div> Priya K.</div></td>
+                <td style="color:var(--text3);font-size:12px">VH-2024-00144</td><td>Paediatrics</td><td>Dr. Ramesh</td>
+                <td><span class="badge badge-blue">OPD</span></td><td><span class="badge badge-teal">In Queue</span></td>
+                <td><button class="btn btn-outline btn-sm">View</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ======================== RECEPTION DASHBOARD ======================== -->
+      <div class="page" id="page-reception">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Reception Desk</div>
+            <div class="page-subtitle">Token & Patient Management</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline" onclick="showPage('search')">🔍 Find Patient</button>
+            <button class="btn btn-primary" onclick="showPage('register')">+ New Patient</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Token Queue — Cardiology</div>
+                <div class="card-subtitle">Dr. Aravind Kumar • 18 patients today</div>
+              </div>
+              <select class="form-select" style="width:auto;font-size:12px">
+                <option>Cardiology</option><option>General Medicine</option><option>Orthopaedics</option>
+              </select>
+            </div>
+            <div class="token-grid">
+              <div class="token done">01<sub>Done</sub></div>
+              <div class="token done">02<sub>Done</sub></div>
+              <div class="token done">03<sub>Done</sub></div>
+              <div class="token done">04<sub>Done</sub></div>
+              <div class="token done">05<sub>Done</sub></div>
+              <div class="token done">06<sub>Done</sub></div>
+              <div class="token done">07<sub>Done</sub></div>
+              <div class="token done">08<sub>Done</sub></div>
+              <div class="token active">09<sub>Now</sub></div>
+              <div class="token waiting">10<sub>Waiting</sub></div>
+              <div class="token waiting">11<sub>Waiting</sub></div>
+              <div class="token waiting">12<sub>Waiting</sub></div>
+              <div class="token skipped">13<sub>Absent</sub></div>
+              <div class="token waiting">14<sub>Waiting</sub></div>
+              <div class="token waiting">15<sub>Waiting</sub></div>
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px">
+              <button class="btn btn-outline btn-sm">⏭ Skip</button>
+              <button class="btn btn-primary btn-sm">✓ Call Next (10)</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Quick Token Issue</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Patient ID or Phone</label>
+              <input type="text" class="form-input" placeholder="VH-2024-XXXXX or mobile number">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Department</label>
+              <select class="form-select">
+                <option>Cardiology</option><option>General Medicine</option><option>Orthopaedics</option><option>Paediatrics</option><option>Gynaecology</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Visit Type</label>
+              <div style="display:flex;gap:8px">
+                <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="radio" name="vtype" checked> OPD</label>
+                <label style="display:flex;align-items:center;gap:5px;font-size:13px"><input type="radio" name="vtype"> Emergency</label>
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%">Issue Token #16</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><div class="card-title">Today's Appointments</div></div>
+          <table>
+            <thead><tr><th>Token</th><th>Patient</th><th>Department</th><th>Doctor</th><th>Time</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td style="font-weight:700;color:var(--teal)">#09</td><td>Sundaram N.</td><td>Cardiology</td><td>Dr. Aravind</td><td>11:20</td><td><span class="badge badge-teal">In Consultation</span></td></tr>
+              <tr><td style="font-weight:700">#10</td><td>Anbu K.</td><td>Cardiology</td><td>Dr. Aravind</td><td>11:35</td><td><span class="badge badge-gray">Waiting</span></td></tr>
+              <tr><td style="font-weight:700">#11</td><td>Revathi M.</td><td>Cardiology</td><td>Dr. Aravind</td><td>11:50</td><td><span class="badge badge-gray">Waiting</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ======================== DOCTOR DASHBOARD ======================== -->
+      <div class="page" id="page-doctor">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Dr. Aravind Kumar</div>
+            <div class="page-subtitle">Cardiology • 18 patients today • Token 09 active</div>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-header"><div class="card-title">My Queue Today</div><span class="badge badge-teal">9 Remaining</span></div>
+              <table>
+                <thead><tr><th>#</th><th>Patient</th><th>Chief Complaint</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr style="background:var(--teal-light)"><td style="font-weight:700;color:var(--teal)">09</td><td><b>Sundaram N.</b><br><small style="color:var(--text3)">M/58</small></td><td>Palpitations</td><td><span class="badge badge-teal">Active</span></td></tr>
+                  <tr><td>10</td><td>Anbu K.<br><small style="color:var(--text3)">M/42</small></td><td>Chest pain</td><td><span class="badge badge-gray">Waiting</span></td></tr>
+                  <tr><td>11</td><td>Revathi M.<br><small style="color:var(--text3)">F/35</small></td><td>Follow-up</td><td><span class="badge badge-gray">Waiting</span></td></tr>
+                  <tr><td>12</td><td>Karthik S.<br><small style="color:var(--text3)">M/61</small></td><td>SOB</td><td><span class="badge badge-gray">Waiting</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title">Lab Results to Review</div><span class="badge badge-red">4 New</span></div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="padding:8px;background:var(--blue-light);border-radius:7px;border:1px solid #bfdbfe">
+                  <div style="font-size:13px;font-weight:500">ECG — Rajesh Kumar</div>
+                  <div style="font-size:11px;color:var(--text3)">Uploaded 20 min ago</div>
+                  <button class="btn btn-outline btn-sm" style="margin-top:6px">View Report</button>
+                </div>
+                <div style="padding:8px;background:var(--blue-light);border-radius:7px;border:1px solid #bfdbfe">
+                  <div style="font-size:13px;font-weight:500">CBC + LFT — Murugan S.</div>
+                  <div style="font-size:11px;color:var(--text3)">Uploaded 45 min ago</div>
+                  <button class="btn btn-outline btn-sm" style="margin-top:6px">View Report</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CONSULTATION PANEL -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Consultation — Token #09</div>
+                <div class="card-subtitle">Sundaram Narayanan • M/58 • VH-2024-00139</div>
+              </div>
+              <span class="badge badge-amber">Hypertension</span>
+            </div>
+
+            <div class="section-title">Patient History</div>
+            <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px">
+              <div style="display:flex;gap:16px;flex-wrap:wrap">
+                <span>🩸 Blood: <b>B+</b></span>
+                <span>⚠️ Allergy: <b>Sulfa drugs</b></span>
+                <span>💊 Chronic: <b>HTN, T2DM</b></span>
+                <span>🔄 Visits: <b>14</b></span>
+              </div>
+            </div>
+
+            <div class="form-grid-2" style="margin-bottom:12px">
+              <div class="form-group">
+                <label class="form-label">Chief Complaint</label>
+                <input class="form-input" type="text" value="Palpitations, dizziness for 3 days">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Diagnosis</label>
+                <input class="form-input" type="text" placeholder="Enter diagnosis / ICD code">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Clinical Notes</label>
+              <textarea class="form-textarea" placeholder="Examination findings, clinical observations…"></textarea>
+            </div>
+
+            <div class="section-title" style="margin-top:4px">Prescriptions</div>
+            <div id="rx-list">
+              <div class="rx-item">
+                <div class="rx-icon">💊</div>
+                <div style="flex:1">
+                  <input class="form-input" style="margin-bottom:4px" type="text" value="Amlodipine 5mg — 1-0-1 — 30 days — After food">
+                </div>
+                <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:#fca5a5">✕</button>
+              </div>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="addRxRow()" style="margin-top:8px">+ Add Medicine</button>
+
+            <div class="section-title" style="margin-top:14px">Lab Orders</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+              <span class="badge badge-teal" style="cursor:pointer">CBC ✓</span>
+              <span class="badge badge-gray" style="cursor:pointer" onclick="this.className='badge badge-teal'">ECG</span>
+              <span class="badge badge-gray" style="cursor:pointer" onclick="this.className='badge badge-teal'">Echo</span>
+              <span class="badge badge-gray" style="cursor:pointer" onclick="this.className='badge badge-teal'">HbA1c</span>
+              <span class="badge badge-gray" style="cursor:pointer" onclick="this.className='badge badge-teal'">Lipid Profile</span>
+              <span class="badge badge-gray" style="cursor:pointer" onclick="this.className='badge badge-teal'">RFT</span>
+              <span class="badge badge-gray" style="cursor:pointer" onclick="this.className='badge badge-teal'">LFT</span>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:16px;align-items:center">
+              <label style="font-size:13px;display:flex;align-items:center;gap:5px"><input type="checkbox"> Admit Patient (IPD)</label>
+              <button class="btn btn-outline" style="margin-left:auto">Save Draft</button>
+              <button class="btn btn-primary">Save & Next Patient</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== NURSE / IPD VITALS ======================== -->
+      <div class="page" id="page-vitals">
+        <div class="page-header">
+          <div>
+            <div class="page-title">IPD Monitoring</div>
+            <div class="page-subtitle">Ward C — Cardiology</div>
+          </div>
+          <button class="btn btn-primary" onclick="showPage('bed-map')">🛏️ Bed Map</button>
+        </div>
+
+        <div style="background:var(--red-light);border:1px solid #fca5a5;border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:20px">⚠️</span>
+          <div>
+            <div style="font-weight:600;color:var(--red)">Critical Alert — Room C-204, Bed 3</div>
+            <div style="font-size:13px;color:#7f1d1d">Rajesh Kumar — BP 182/110 mmHg recorded at 11:02 AM. Notify Dr. Aravind Kumar immediately.</div>
+          </div>
+          <button class="btn btn-red btn-sm" style="margin-left:auto">Acknowledge</button>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Rajesh Kumar — C-204</div>
+                <div class="card-subtitle">VH-2024-00142 • M/52 • Day 3 of admission</div>
+              </div>
+              <span class="badge badge-red">Critical</span>
+            </div>
+            <div class="vitals-grid">
+              <div class="vital-card">
+                <div class="vital-label">Blood Pressure</div>
+                <div class="vital-value vital-critical">182/110</div>
+                <div class="vital-unit">mmHg</div>
+                <div class="vital-alert">⚠ Hypertensive Crisis</div>
+              </div>
+              <div class="vital-card">
+                <div class="vital-label">Heart Rate</div>
+                <div class="vital-value vital-warning">104</div>
+                <div class="vital-unit">bpm</div>
+                <div class="vital-alert" style="background:var(--amber-light);color:var(--amber)">↑ Tachycardia</div>
+              </div>
+              <div class="vital-card">
+                <div class="vital-label">SpO₂</div>
+                <div class="vital-value vital-normal">97</div>
+                <div class="vital-unit">%</div>
+              </div>
+              <div class="vital-card">
+                <div class="vital-label">Temperature</div>
+                <div class="vital-value vital-normal">37.1</div>
+                <div class="vital-unit">°C</div>
+              </div>
+              <div class="vital-card">
+                <div class="vital-label">RR</div>
+                <div class="vital-value vital-warning">22</div>
+                <div class="vital-unit">breaths/min</div>
+              </div>
+              <div class="vital-card">
+                <div class="vital-label">Last Recorded</div>
+                <div class="vital-value" style="font-size:15px;color:var(--text)">11:02</div>
+                <div class="vital-unit">AM today</div>
+              </div>
+            </div>
+            <div style="margin-top:14px">
+              <button class="btn btn-primary" style="width:100%">+ Record New Vitals</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">Record Vitals</div></div>
+            <div class="form-group">
+              <label class="form-label">Patient Room / Bed</label>
+              <select class="form-select"><option>C-204 — Rajesh Kumar</option><option>C-201 — Anbu K.</option><option>ICU-02 — Murugan S.</option></select>
+            </div>
+            <div class="form-grid-2">
+              <div class="form-group"><label class="form-label">BP Systolic</label><input class="form-input" type="number" placeholder="120"></div>
+              <div class="form-group"><label class="form-label">BP Diastolic</label><input class="form-input" type="number" placeholder="80"></div>
+              <div class="form-group"><label class="form-label">Pulse (bpm)</label><input class="form-input" type="number" placeholder="72"></div>
+              <div class="form-group"><label class="form-label">Temperature (°C)</label><input class="form-input" type="number" placeholder="37.0" step="0.1"></div>
+              <div class="form-group"><label class="form-label">SpO₂ (%)</label><input class="form-input" type="number" placeholder="98"></div>
+              <div class="form-group"><label class="form-label">RR (breaths/min)</label><input class="form-input" type="number" placeholder="16"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Nurse Notes</label><textarea class="form-textarea" placeholder="Any observations…" style="min-height:60px"></textarea></div>
+            <button class="btn btn-primary" style="width:100%">Save Vitals</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== BED MAP ======================== -->
+      <div class="page" id="page-bed-map">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Bed Management</div>
+            <div class="page-subtitle">38 occupied • 18 available • 4 under maintenance</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;font-size:12px">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--green-light);border:1px solid #bbf7d0;border-radius:2px;display:inline-block"></span>Available</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#fef2f2;border:1px solid #fca5a5;border-radius:2px;display:inline-block"></span>Occupied</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:var(--amber-light);border:1px solid #fde68a;border-radius:2px;display:inline-block"></span>Maintenance</span>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-header"><div class="card-title">Cardiology Ward — Floor 2</div></div>
+          <div class="bed-map">
+            <div class="bed occupied"><div class="bed-num">C-201</div><div class="bed-type">General</div><div style="font-size:10px;margin-top:4px;color:inherit">Anbu K.</div></div>
+            <div class="bed occupied"><div class="bed-num">C-202</div><div class="bed-type">General</div><div style="font-size:10px;margin-top:4px;color:inherit">Selvam R.</div></div>
+            <div class="bed available"><div class="bed-num">C-203</div><div class="bed-type">General</div><div style="font-size:10px;margin-top:4px">Free</div></div>
+            <div class="bed occupied"><div class="bed-num">C-204</div><div class="bed-type">General</div><div style="font-size:10px;margin-top:4px;color:inherit">Rajesh K.⚠</div></div>
+            <div class="bed available"><div class="bed-num">C-205</div><div class="bed-type">Semi-pvt</div><div style="font-size:10px;margin-top:4px">Free</div></div>
+            <div class="bed occupied"><div class="bed-num">C-206</div><div class="bed-type">Private</div><div style="font-size:10px;margin-top:4px;color:inherit">Devi M.</div></div>
+            <div class="bed maintenance"><div class="bed-num">C-207</div><div class="bed-type">General</div><div style="font-size:10px;margin-top:4px">Repair</div></div>
+            <div class="bed available"><div class="bed-num">C-208</div><div class="bed-type">General</div><div style="font-size:10px;margin-top:4px">Free</div></div>
+            <div class="bed occupied"><div class="bed-num">C-209</div><div class="bed-type">Semi-pvt</div><div style="font-size:10px;margin-top:4px;color:inherit">Karthik V.</div></div>
+            <div class="bed available"><div class="bed-num">C-210</div><div class="bed-type">Private</div><div style="font-size:10px;margin-top:4px">Free</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">ICU — Ground Floor</div><span class="badge badge-red">2/4 Critical</span></div>
+          <div class="bed-map" style="grid-template-columns:repeat(4,1fr)">
+            <div class="bed occupied"><div class="bed-num">ICU-01</div><div class="bed-type">ICU</div><div style="font-size:10px;margin-top:4px;color:inherit">Balu R.</div></div>
+            <div class="bed occupied"><div class="bed-num">ICU-02</div><div class="bed-type">ICU</div><div style="font-size:10px;margin-top:4px;color:inherit">Murugan S.⚠</div></div>
+            <div class="bed available"><div class="bed-num">ICU-03</div><div class="bed-type">ICU</div><div style="font-size:10px;margin-top:4px">Free</div></div>
+            <div class="bed available"><div class="bed-num">ICU-04</div><div class="bed-type">ICU</div><div style="font-size:10px;margin-top:4px">Free</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== PHARMACY ======================== -->
+      <div class="page" id="page-pharmacy">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Pharmacy</div>
+            <div class="page-subtitle">Prescriptions • Dispensing • Inventory</div>
+          </div>
+          <button class="btn btn-outline">📦 View Inventory</button>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Pending Prescriptions</div><span class="badge badge-amber">6 Pending</span></div>
+            <table>
+              <thead><tr><th>Patient</th><th>Doctor</th><th>Items</th><th>Time</th><th>Action</th></tr></thead>
+              <tbody>
+                <tr><td>Rajesh Kumar</td><td>Dr. Aravind</td><td>3 medicines</td><td>10:45</td><td><button class="btn btn-primary btn-sm">Dispense</button></td></tr>
+                <tr><td>Anbu K.</td><td>Dr. Aravind</td><td>2 medicines</td><td>11:10</td><td><button class="btn btn-primary btn-sm">Dispense</button></td></tr>
+                <tr><td>Lakshmi D.</td><td>Dr. Meenakshi</td><td>1 medicine</td><td>11:25</td><td><button class="btn btn-primary btn-sm">Dispense</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Low Stock Alerts</div><span class="badge badge-red">3 Items</span></div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px"><span><b>Metformin 500mg</b></span><span style="color:var(--red)">120 left</span></div>
+                <div class="inv-bar"><div class="inv-bar-fill" style="width:12%;background:var(--red)"></div></div>
+                <div style="font-size:11px;color:var(--text3)">Reorder level: 500 • Cipla Ltd.</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px"><span><b>Atorvastatin 20mg</b></span><span style="color:var(--amber)">280 left</span></div>
+                <div class="inv-bar"><div class="inv-bar-fill" style="width:28%;background:var(--amber)"></div></div>
+                <div style="font-size:11px;color:var(--text3)">Reorder level: 300 • Sun Pharma</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px"><span><b>Clopidogrel 75mg</b></span><span style="color:var(--amber)">340 left</span></div>
+                <div class="inv-bar"><div class="inv-bar-fill" style="width:34%;background:var(--amber)"></div></div>
+                <div style="font-size:11px;color:var(--text3)">Reorder level: 400 • Hetero Drugs</div>
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:13px"><span><b>Aspirin 75mg</b></span><span style="color:var(--green)">2400 left</span></div>
+                <div class="inv-bar"><div class="inv-bar-fill" style="width:80%;background:var(--green)"></div></div>
+                <div style="font-size:11px;color:var(--text3)">Reorder level: 500 • Cipla Ltd.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== LAB DASHBOARD ======================== -->
+      <div class="page" id="page-lab">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Lab Management</div>
+            <div class="page-subtitle">Test orders • Sample collection • Results upload</div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Pending Test Orders</div><span class="badge badge-red">12 Pending</span></div>
+            <table>
+              <thead><tr><th>Order ID</th><th>Patient</th><th>Tests</th><th>Priority</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td style="font-size:12px;color:var(--text3)">VH-L-00441</td><td>Rajesh K.</td><td>ECG, CBC</td><td><span class="badge badge-red">Urgent</span></td><td><button class="btn btn-primary btn-sm">Upload</button></td></tr>
+                <tr><td style="font-size:12px;color:var(--text3)">VH-L-00442</td><td>Murugan S.</td><td>CBC, LFT, RFT</td><td><span class="badge badge-red">Urgent</span></td><td><button class="btn btn-primary btn-sm">Upload</button></td></tr>
+                <tr><td style="font-size:12px;color:var(--text3)">VH-L-00443</td><td>Lakshmi D.</td><td>HbA1c</td><td><span class="badge badge-gray">Routine</span></td><td><button class="btn btn-outline btn-sm">Collect</button></td></tr>
+                <tr><td style="font-size:12px;color:var(--text3)">VH-L-00444</td><td>Anbu K.</td><td>Lipid Profile</td><td><span class="badge badge-gray">Routine</span></td><td><button class="btn btn-outline btn-sm">Collect</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Upload Results</div></div>
+            <div class="form-group"><label class="form-label">Order ID</label><input class="form-input" type="text" placeholder="VH-L-XXXXX"></div>
+            <div class="form-group"><label class="form-label">Test Name</label><select class="form-select"><option>CBC</option><option>ECG</option><option>LFT</option><option>RFT</option><option>HbA1c</option></select></div>
+            <div class="form-group">
+              <label class="form-label">Upload Report (PDF)</label>
+              <div style="border:2px dashed var(--border2);border-radius:8px;padding:20px;text-align:center;color:var(--text3);font-size:13px;cursor:pointer">
+                📄 Click or drag PDF here
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label">Interpretation / Notes</label><textarea class="form-textarea" placeholder="Key findings…" style="min-height:60px"></textarea></div>
+            <button class="btn btn-primary" style="width:100%">Submit Results</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== REGISTER PATIENT ======================== -->
+      <div class="page" id="page-register">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Register New Patient</div>
+            <div class="breadcrumb">Reception → <span>New Registration</span></div>
+          </div>
+          <div style="background:var(--teal-light);border:1px solid #99f6e4;border-radius:8px;padding:8px 14px;font-size:13px;color:var(--teal-dark)">
+            Auto ID: <b>VH-2026-00145</b>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Personal Information</div>
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" type="text" placeholder="Patient's full name"></div>
+            <div class="form-group"><label class="form-label">Date of Birth *</label><input class="form-input" type="date"></div>
+            <div class="form-group"><label class="form-label">Gender *</label><select class="form-select"><option>Male</option><option>Female</option><option>Other</option></select></div>
+            <div class="form-group"><label class="form-label">Phone *</label><input class="form-input" type="tel" placeholder="10-digit mobile"></div>
+            <div class="form-group"><label class="form-label">Blood Group</label><select class="form-select"><option>--</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div>
+            <div class="form-group"><label class="form-label">Aadhar No.</label><input class="form-input" type="text" placeholder="XXXX-XXXX-XXXX"></div>
+          </div>
+          <div class="form-group"><label class="form-label">Address</label><input class="form-input" type="text" placeholder="Street, City, Pincode"></div>
+          <div class="form-grid-2" style="margin-top:4px">
+            <div class="form-group"><label class="form-label">Allergies</label><input class="form-input" type="text" placeholder="e.g. Penicillin, Sulfa (comma separated)"></div>
+            <div class="form-group"><label class="form-label">Chronic Conditions</label><input class="form-input" type="text" placeholder="e.g. Hypertension, Diabetes"></div>
+          </div>
+
+          <div class="section-title" style="margin-top:8px">Visit Details</div>
+          <div class="form-grid-3">
+            <div class="form-group"><label class="form-label">Visit Type *</label><select class="form-select"><option>OPD</option><option>IPD</option><option>Emergency</option></select></div>
+            <div class="form-group"><label class="form-label">Department *</label><select class="form-select"><option>General Medicine</option><option>Cardiology</option><option>Orthopaedics</option><option>Paediatrics</option><option>Gynaecology</option><option>Dermatology</option><option>Neurology</option></select></div>
+            <div class="form-group"><label class="form-label">Assign Doctor *</label><select class="form-select"><option>Dr. Aravind Kumar</option><option>Dr. Meenakshi Sundaram</option><option>Dr. Ramesh Babu</option></select></div>
+          </div>
+          <div class="form-group"><label class="form-label">Chief Complaint</label><input class="form-input" type="text" placeholder="Reason for visit"></div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:8px">
+            <button class="btn btn-outline" onclick="showPage('reception')">Cancel</button>
+            <button class="btn btn-primary">Register & Issue Token</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== BILLING ======================== -->
+      <div class="page" id="page-billing">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Billing</div>
+            <div class="page-subtitle">Invoice #VH-INV-2026-00781 — Rajesh Kumar</div>
+          </div>
+          <button class="btn btn-outline">📄 Download PDF</button>
+        </div>
+        <div class="grid-3">
+          <div class="card">
+            <div class="section-title">Invoice Details</div>
+            <table>
+              <thead><tr><th>Description</th><th style="text-align:right">Amount</th></tr></thead>
+              <tbody>
+                <tr><td>OPD Consultation — Cardiology</td><td style="text-align:right">₹ 500</td></tr>
+                <tr><td>ECG (12-lead)</td><td style="text-align:right">₹ 300</td></tr>
+                <tr><td>CBC Test</td><td style="text-align:right">₹ 250</td></tr>
+                <tr><td>Amlodipine 5mg × 30</td><td style="text-align:right">₹ 165</td></tr>
+                <tr><td>General Ward — 3 days @ ₹1500</td><td style="text-align:right">₹ 4,500</td></tr>
+                <tr style="background:var(--surface2)"><td style="font-weight:600">Subtotal</td><td style="text-align:right;font-weight:600">₹ 5,715</td></tr>
+                <tr><td style="color:var(--green)">Discount (Staff)</td><td style="text-align:right;color:var(--green)">- ₹ 200</td></tr>
+                <tr style="background:var(--teal-light)"><td style="font-weight:700;color:var(--teal-dark)">Total</td><td style="text-align:right;font-weight:700;color:var(--teal-dark)">₹ 5,515</td></tr>
+              </tbody>
+            </table>
+            <div style="margin-top:14px;padding:10px 12px;background:var(--amber-light);border-radius:8px;border:1px solid #fde68a">
+              <div style="font-size:12px;color:var(--text2)">Amount Paid: <b>₹ 2,000</b></div>
+              <div style="font-size:13px;font-weight:700;color:var(--amber);margin-top:2px">Balance Due: ₹ 3,515</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">Record Payment</div>
+            <div class="form-group"><label class="form-label">Amount</label><input class="form-input" type="number" placeholder="Enter amount" value="3515"></div>
+            <div class="form-group"><label class="form-label">Payment Mode</label>
+              <select class="form-select">
+                <option>Cash</option><option>UPI</option><option>Card</option><option>Insurance</option><option>Cheque</option>
+              </select>
+            </div>
+            <div class="form-group"><label class="form-label">Reference / UPI ID</label><input class="form-input" type="text" placeholder="Transaction reference"></div>
+            <button class="btn btn-primary" style="width:100%">Record Payment</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================== PATIENT DETAIL ======================== -->
+      <div class="page" id="page-patient-detail">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Rajesh Kumar</div>
+            <div class="page-subtitle">VH-2024-00142 • M/52 • B+ • Admitted — Cardiology</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline" onclick="showPage('vitals')">📊 Vitals</button>
+            <button class="btn btn-outline" onclick="showPage('billing')">🧾 Billing</button>
+            <button class="btn btn-primary">Discharge</button>
+          </div>
+        </div>
+        <div class="grid-3">
+          <div>
+            <div class="card" style="margin-bottom:16px">
+              <div class="card-header"><div class="card-title">Patient Info</div></div>
+              <table>
+                <tr><td style="color:var(--text3)">DOB</td><td>15 Mar 1974</td></tr>
+                <tr><td style="color:var(--text3)">Phone</td><td>9994001001</td></tr>
+                <tr><td style="color:var(--text3)">Address</td><td>12 Anna Nagar, Kallakurichi</td></tr>
+                <tr><td style="color:var(--text3)">Allergies</td><td><span class="badge badge-red">Penicillin</span></td></tr>
+                <tr><td style="color:var(--text3)">Chronic</td><td>HTN, T2DM</td></tr>
+                <tr><td style="color:var(--text3)">Emergency</td><td>Lakshmi — 9994001002</td></tr>
+              </table>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Current Vitals</div><span class="badge badge-red">Critical</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="padding:8px;background:var(--red-light);border-radius:7px;text-align:center">
+                  <div style="font-size:10px;color:var(--text3)">BP</div>
+                  <div style="font-size:18px;font-weight:700;color:var(--red)">182/110</div>
+                </div>
+                <div style="padding:8px;background:var(--amber-light);border-radius:7px;text-align:center">
+                  <div style="font-size:10px;color:var(--text3)">Pulse</div>
+                  <div style="font-size:18px;font-weight:700;color:var(--amber)">104</div>
+                </div>
+                <div style="padding:8px;background:var(--green-light);border-radius:7px;text-align:center">
+                  <div style="font-size:10px;color:var(--text3)">SpO₂</div>
+                  <div style="font-size:18px;font-weight:700;color:var(--green)">97%</div>
+                </div>
+                <div style="padding:8px;background:var(--surface2);border-radius:7px;text-align:center">
+                  <div style="font-size:10px;color:var(--text3)">Temp</div>
+                  <div style="font-size:18px;font-weight:700">37.1°</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-title">Visit Timeline</div></div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--red)"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500">Critical BP Alert</div>
+                <div style="font-size:11px;color:var(--text3)">Today 11:02 AM • Nurse Kavitha</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:3px">BP 182/110 recorded. Doctor notified.</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--blue)"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500">Lab Results Ready</div>
+                <div style="font-size:11px;color:var(--text3)">Today 09:30 AM • Lab Tech Senthil</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:3px">ECG, CBC uploaded. Mild anaemia noted.</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500">Doctor Visit + Rx Updated</div>
+                <div style="font-size:11px;color:var(--text3)">Yesterday 6:00 PM • Dr. Aravind Kumar</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:3px">Diagnosis: NSTEMI. Added Heparin 5000 IU IV.</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500">Lab Orders Placed</div>
+                <div style="font-size:11px;color:var(--text3)">Yesterday 2:15 PM • Dr. Aravind Kumar</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:3px">ECG, CBC, Troponin-I ordered.</div>
+              </div>
+            </div>
+            <div class="timeline-item">
+              <div class="timeline-dot" style="background:var(--teal)"></div>
+              <div>
+                <div style="font-size:13px;font-weight:500">Admitted to Ward C-204</div>
+                <div style="font-size:11px;color:var(--text3)">24 Mar 2026 • Receptionist Priya</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:3px">IPD admission. Chief complaint: chest pain.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end #content -->
+  </div><!-- end .main -->
+</div><!-- end .app -->
+
+<script>
+const ROLE_CONFIG = {
+  admin: {
+    name: 'Admin', initials: 'AD', label: 'Administrator',
+    nav: [
+      { label: 'Dashboard', page: 'admin', icon: '◈' },
+      { section: 'Management' },
+      { label: 'Patients', page: 'patient-detail', icon: '👤' },
+      { label: 'Bed Map', page: 'bed-map', icon: '🛏️' },
+      { label: 'Billing', page: 'billing', icon: '₹', badge: 4 },
+      { label: 'Staff & Users', page: '', icon: '👥' },
+      { section: 'Reports' },
+      { label: 'Analytics', page: '', icon: '📊' },
+      { label: 'Revenue', page: '', icon: '📈' },
+    ]
+  },
+  reception: {
+    name: 'Priya Rajan', initials: 'PR', label: 'Receptionist',
+    nav: [
+      { label: 'Token Queue', page: 'reception', icon: '🎟️' },
+      { label: 'Register Patient', page: 'register', icon: '➕' },
+      { label: 'Search Patient', page: 'patient-detail', icon: '🔍' },
+      { section: 'Appointments' },
+      { label: 'Today\'s Queue', page: 'reception', icon: '📋' },
+      { label: 'Billing', page: 'billing', icon: '₹' },
+    ]
+  },
+  doctor: {
+    name: 'Dr. Aravind', initials: 'AK', label: 'Cardiologist',
+    nav: [
+      { label: 'My Queue', page: 'doctor', icon: '🩺', badge: 9 },
+      { label: 'Consultation', page: 'doctor', icon: '📝' },
+      { section: 'Patients' },
+      { label: 'My Patients', page: 'patient-detail', icon: '👤' },
+      { label: 'Lab Results', page: 'lab', icon: '🔬', badge: 4 },
+      { label: 'IPD Patients', page: 'vitals', icon: '🛏️' },
+    ]
+  },
+  nurse: {
+    name: 'Kavitha Devi', initials: 'KD', label: 'Staff Nurse',
+    nav: [
+      { label: 'IPD Monitoring', page: 'vitals', icon: '📊', badge: 2 },
+      { label: 'Record Vitals', page: 'vitals', icon: '💉' },
+      { label: 'Bed Map', page: 'bed-map', icon: '🛏️' },
+      { section: 'Patients' },
+      { label: 'Ward Patients', page: 'patient-detail', icon: '👤' },
+    ]
+  },
+  lab: {
+    name: 'Senthil Kumar', initials: 'SK', label: 'Lab Technician',
+    nav: [
+      { label: 'Pending Orders', page: 'lab', icon: '🔬', badge: 12 },
+      { label: 'Upload Results', page: 'lab', icon: '📤' },
+      { section: 'History' },
+      { label: 'Completed', page: 'lab', icon: '✓' },
+    ]
+  },
+  pharmacy: {
+    name: 'Lakshmi Priya', initials: 'LP', label: 'Pharmacist',
+    nav: [
+      { label: 'Prescriptions', page: 'pharmacy', icon: '💊', badge: 6 },
+      { label: 'Dispense', page: 'pharmacy', icon: '📦' },
+      { section: 'Inventory' },
+      { label: 'Stock Levels', page: 'pharmacy', icon: '📉' },
+      { label: 'Low Stock Alerts', page: 'pharmacy', icon: '⚠️', badge: 3 },
+    ]
+  }
+};
+
+let currentRole = 'admin';
+let currentPage = 'admin';
+
+function switchRole(role) {
+  currentRole = role;
+  const config = ROLE_CONFIG[role];
+  document.getElementById('username-display').textContent = config.name;
+  document.getElementById('role-display').textContent = config.label;
+  document.getElementById('avatar-initials').textContent = config.initials;
+  renderNav(config.nav);
+  const defaultPage = config.nav.find(n => n.page)?.page || 'admin';
+  showPage(defaultPage);
+}
+
+function renderNav(items) {
+  const nav = document.getElementById('sidebar-nav');
+  nav.innerHTML = '';
+  items.forEach(item => {
+    if (item.section) {
+      nav.innerHTML += `<div class="nav-section-label">${item.section}</div>`;
+    } else {
+      nav.innerHTML += `<div class="nav-item${item.page === currentPage ? ' active' : ''}" onclick="showPage('${item.page}', this)">
+        <span class="icon">${item.icon}</span>${item.label}
+        ${item.badge ? `<span class="nav-badge">${item.badge}</span>` : ''}
+      </div>`;
+    }
+  });
+}
+
+function showPage(pageName, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById('page-' + pageName);
+  if (target) {
+    target.classList.add('active');
+    currentPage = pageName;
+  }
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  else {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick')?.includes(`'${pageName}'`)) n.classList.add('active');
+    });
+  }
+  document.querySelector('.content').scrollTop = 0;
+}
+
+function addRxRow() {
+  const list = document.getElementById('rx-list');
+  const div = document.createElement('div');
+  div.className = 'rx-item';
+  div.innerHTML = `<div class="rx-icon">💊</div>
+    <div style="flex:1"><input class="form-input" type="text" placeholder="Medicine name — dosage — frequency — duration"></div>
+    <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:#fca5a5" onclick="this.parentElement.remove()">✕</button>`;
+  list.appendChild(div);
+}
+
+// Clock
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// Init
+switchRole('admin');
+</script>
+</body>
+</html>
