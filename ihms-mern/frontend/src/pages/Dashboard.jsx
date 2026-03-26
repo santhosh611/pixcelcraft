@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 
 const ROLE_CONFIG = {
   admin: {
@@ -77,8 +78,14 @@ const ROLE_CONFIG = {
 };
 
 export default function Dashboard() {
-  const [currentRole, setCurrentRole] = useState('admin');
-  const [currentPage, setCurrentPage] = useState('admin');
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const urlRole = searchParams.get('role');
+  const initialRole = (urlRole && ROLE_CONFIG[urlRole]) ? urlRole : 'admin';
+  const initialPage = ROLE_CONFIG[initialRole].nav.find(n => n.page)?.page || 'admin';
+
+  const [currentRole, setCurrentRole] = useState(initialRole);
+  const [currentPage, setCurrentPage] = useState(initialPage);
   const [time, setTime] = useState(new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit', second:'2-digit'}));
   const [rxList, setRxList] = useState([{ id: 1, val: 'Amlodipine 5mg — 1-0-1 — 30 days — After food' }]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -1303,6 +1310,63 @@ export default function Dashboard() {
                     <button className="btn btn-outline" style={{width:'100%', marginTop:'24px'}} onClick={() => showToast('Redirecting to appointment booking...')}>+ Book New Appointment</button>
                   </div>
                 </div>
+
+                <div className="grid-2" style={{marginTop:'16px'}}>
+                  <div className="card">
+                    <div className="card-header"><div className="card-title">My Lab Reports</div><span className="badge badge-blue">1 New</span></div>
+                    <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
+                      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px', background:'var(--surface2)', borderRadius:'8px', border:'1px solid var(--border)'}}>
+                        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                          <div style={{fontSize:'24px'}}>📄</div>
+                          <div>
+                            <div style={{fontSize:'13px', fontWeight:'600'}}>ECG & CBC Blood Test</div>
+                            <div style={{fontSize:'11px', color:'var(--text3)'}}>24 Mar 2026 • Dr. Aravind Kumar</div>
+                          </div>
+                        </div>
+                        <button className="btn btn-outline btn-sm" onClick={() => showToast('Downloading Report PDF...')}>Download</button>
+                      </div>
+                      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', padding:'12px', background:'var(--surface2)', borderRadius:'8px', border:'1px solid var(--border)'}}>
+                        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
+                          <div style={{fontSize:'24px'}}>📄</div>
+                          <div>
+                            <div style={{fontSize:'13px', fontWeight:'600'}}>Lipid Profile</div>
+                            <div style={{fontSize:'11px', color:'var(--text3)'}}>10 Jan 2026 • Dr. Meenakshi</div>
+                          </div>
+                        </div>
+                        <button className="btn btn-outline btn-sm" onClick={() => showToast('Downloading Report PDF...')}>Download</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="card">
+                    <div className="card-header"><div className="card-title">Health Snapshot</div></div>
+                    <table style={{marginBottom: '16px'}}>
+                      <tbody>
+                        <tr>
+                          <td style={{color:'var(--text2)', padding:'8px 0'}}>Latest BP</td>
+                          <td style={{textAlign:'right', padding:'8px 0'}}><span className="badge badge-red">182/110 mmHg</span></td>
+                        </tr>
+                        <tr>
+                          <td style={{color:'var(--text2)', padding:'8px 0'}}>Heart Rate</td>
+                          <td style={{textAlign:'right', padding:'8px 0'}}><span className="badge badge-amber">104 bpm</span></td>
+                        </tr>
+                        <tr>
+                          <td style={{color:'var(--text2)', padding:'8px 0'}}>Blood Sugar (F)</td>
+                          <td style={{textAlign:'right', padding:'8px 0'}}><span className="badge badge-green">98 mg/dL</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <div style={{padding:'12px', background:'var(--teal-light)', borderRadius:'8px', border:'1px solid #99f6e4', display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                      <div>
+                        <div style={{fontSize:'12px', color:'var(--teal-dark)'}}>Outstanding Balance</div>
+                        <div style={{fontSize:'16px', fontWeight:'700', color:'var(--teal-dark)', marginTop:'2px'}}>₹ 2,000</div>
+                      </div>
+                      <button className="btn btn-primary btn-sm" onClick={() => showToast('Redirecting to payment gateway...')}>Pay Now</button>
+                    </div>
+                  </div>
+                </div>
+
               </>
             )}
           </div>
